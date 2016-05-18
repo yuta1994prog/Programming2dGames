@@ -1,7 +1,7 @@
 // Programming 2D Games
 // Copyright (c) 2016 by:
 // Yuta ISHII
-// Hello World v1.0
+// 「Character Input」 v1.0
 // winmain.cpp
 
 #define WIN32_LEAN_AND_MEAN
@@ -14,12 +14,16 @@ LRESULT WINAPI WinProc(HWND, UINT, WPARAM, LPARAM);
 
 // グローバル変数
 HINSTANCE hinst;
+HDC hdc;			// デバイスコンテキストへのハンドル
+TCHAR ch = ' ';		// 入力された文字
+RECT rect;			// Rectangle構造体
+PAINTSTRUCT ps;		// WM_PAINTで使用される
 
 // 定数
-const char CLASS_NAME[] = "WinMain";
-const char APP_TITLE[] = "Hello World!";
+const char CLASS_NAME[] = "Keyboard";
+const char APP_TITLE[] = "Character Input";
 const int WINDOW_WIDTH = 400;
-const int WINDOW_HEIGHT = 400;
+const int WINDOW_HEIGHT = 300;
 
 //=====================================================
 // Windows アプリケーションの開始点
@@ -27,6 +31,7 @@ const int WINDOW_HEIGHT = 400;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
+	// ウィンドウ作成
 	if (!CreateMainWindow(hInstance, nCmdShow))
 		return false;
 	// メインのメッセージループ
@@ -50,7 +55,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 //=====================================================
 // ウィンドウイベントコールバック関数
 //=====================================================
-LRESULT WINAPI WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI WinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -58,8 +63,33 @@ LRESULT WINAPI WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Windowsにこのプログラムを終了するように伝える
 			PostQuitMessage(0);
 			return 0;
+		// 文字の入力を受け取る
+		case WM_CHAR:
+			switch (wParam)
+			{
+				case 0x08:	// BackSpace
+				case 0x09:	// Tab
+				case 0x0A:	// ラインフィード
+				case 0x0D:	// キャリッジリターン
+				case 0x1B:	// Esc
+					MessageBeep((UINT)-1);
+					return 0;
+				default:					// 表示可能な文字
+					ch = (TCHAR)wParam;		// 文字を取得
+					// WM_PAINTを強制的に発生させる
+					InvalidateRect(hwnd, NULL, TRUE);
+					return 0;
+			}
+		case WM_PAINT: // ウィンドウを再描写する必要がある場合，デバイスコンテキストへのハンドルを取得
+			hdc = BeginPaint(hwnd, &ps);
+			GetClientRect(hwnd, &rect);		// ウィンドウの矩形を所得
+			// 文字を表示
+			TextOut(hdc, rect.right / 2, rect.bottom / 2, &ch, 1);
+			EndPaint(hwnd, &ps);
+			return 0;
+		default:
+			return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
-	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 //=====================================================
@@ -71,21 +101,21 @@ bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
 	WNDCLASSEX wcx;
 	HWND hwnd;
 	// ウィンドウクラスの構造体をメインウィンドウを記述するパラメータで設定する
-	wcx.cbSize = sizeof(wcx);
-	wcx.style = CS_HREDRAW | CS_VREDRAW;
-	wcx.lpfnWndProc = WinProc;
-	wcx.cbClsExtra = 0;
-	wcx.cbWndExtra = 0;
-	wcx.hInstance = hInstance;
-	wcx.hIcon = NULL;
-	wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcx.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wcx.lpszMenuName = NULL;
-	wcx.lpszClassName = CLASS_NAME;
-	wcx.hIconSm = NULL;
+	wcx.cbSize = sizeof(wcx);				// 構造体のサイズ
+	wcx.style = CS_HREDRAW | CS_VREDRAW;	// ウィンドウサイズ変更時に再描写
+	wcx.lpfnWndProc = WinProc;				// ウィンドウプロシージャを指す
+	wcx.cbClsExtra = 0;						// 拡張クラスメモリなし
+	wcx.cbWndExtra = 0;						// 拡張ウィンドウメモリなし
+	wcx.hInstance = hInstance;				// インスタンスへのハンドル
+	wcx.hIcon = NULL;						// 大きいアイコン
+	wcx.hCursor = LoadCursor(NULL, IDC_ARROW);	// 事前定義されている矢印カーソル
+	wcx.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);	// 黒色の背景
+	wcx.lpszMenuName = NULL;				// メニューリソースの名前
+	wcx.lpszClassName = CLASS_NAME;			// ウィンドウクラスの名前
+	wcx.hIconSm = NULL;						// 小さいアイコン
 	// ウィンドウクラスを登録
 	// エラー時，RegisterClassExは0を戻す
-	if (RegisterClassEx(&wcx) == 0)
+	if (RegisterClassEx(&wcx) == 0)	// エラーの場合
 		return false;
 	// ウィンドウを作成
 	hwnd = CreateWindow(CLASS_NAME, APP_TITLE, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, WINDOW_WIDTH, WINDOW_HEIGHT, (HWND)NULL, (HMENU)NULL, hInstance, (LPVOID)NULL);
