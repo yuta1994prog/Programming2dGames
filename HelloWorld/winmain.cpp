@@ -82,7 +82,7 @@ bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
 	wcx.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wcx.lpszMenuName = NULL;
 	wcx.lpszClassName = CLASS_NAME;
-	wcx.hIcon = NULL;
+	wcx.hIconSm = NULL;
 	// ウィンドウクラスを登録
 	// エラー時，RegisterClassExは0を戻す
 	if (RegisterClassEx(&wcx) == 0)
