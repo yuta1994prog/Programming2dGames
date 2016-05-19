@@ -128,3 +128,21 @@ bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
 	UpdateWindow(hwnd);
 	return true;
 }
+
+//=====================================================
+// 現在のアプリケーションの別のインスタンスがないかチェック
+// 戻り値:別のインスタンスが見つかった:true
+//        見つからなかった:false
+//=====================================================
+
+bool AnotherInstance() 
+{
+	HANDLE outMutex;
+	// 固有の文字列を使ってミューテックスの作成を試みる
+	outMutex = CreateMutex(NULL, true, "Use_a_different_string_here_for_each_program_48161_XYZZY");
+	if (GetLastError()==ERROR_ALREADY_EXISTS)
+	{
+		return true;
+	}
+	return false;
+}
