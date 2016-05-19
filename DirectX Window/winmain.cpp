@@ -1,7 +1,7 @@
 // Programming 2D Games
 // Copyright (c) 2016 by:
 // Yuta ISHII
-// 「DirectX Window」 v1.0
+// 「DirectX Fullscreen」 v1.0
 // winmain.cpp
 
 #define _CRTDBG_MAP_ALLOC	// メモリリークを検出するため
@@ -13,22 +13,12 @@
 
 // 関数プロトタイプ
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
-bool CreateMainWindow(HINSTANCE, int);
+bool CreateMainWindow(HWND &,HINSTANCE, int);
 LRESULT WINAPI WinProc(HWND, UINT, WPARAM, LPARAM);
 
 // グローバル変数
 HINSTANCE hinst;
-HDC hdc;			// デバイスコンテキストへのハンドル
-TCHAR ch = ' ';		// 入力された文字
-RECT rect;			// Rectangle構造体
-PAINTSTRUCT ps;		// WM_PAINTで使用される
-
-// 定数
-const char CLASS_NAME[] = "Keyboard";
-const char APP_TITLE[] = "DirectX Window";
-const int WINDOW_WIDTH = 400;
-const int WINDOW_HEIGHT = 300;
-
+// Graphicsポインタ
 Graphics *graphics;
 
 //=====================================================
@@ -41,6 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 	MSG msg;
+	HWND hwnd = NULL;
 	// ウィンドウ作成
 	if (!CreateMainWindow(hwnd, hInstance, nCmdShow))
 		return 1;
@@ -108,10 +99,9 @@ LRESULT WINAPI WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // ウィンドウ作成
 // 戻り値:エラーの場合:false
 //=====================================================
-bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
+bool CreateMainWindow(HWND &hwnd,HINSTANCE hInstance, int nCmdShow)
 {
 	WNDCLASSEX wcx;
-	HWND hwnd;
 	// ウィンドウクラスの構造体をメインウィンドウを記述するパラメータで設定する
 	wcx.cbSize = sizeof(wcx);				// 構造体のサイズ
 	wcx.style = CS_HREDRAW | CS_VREDRAW;	// ウィンドウサイズ変更時に再描写
@@ -135,10 +125,18 @@ bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
 	else
 		style = WS_OVERLAPPEDWINDOW;
 	// ウィンドウを作成
-	hwnd = CreateWindow(CLASS_NAME, APP_TITLE, style, CW_USEDEFAULT, CW_USEDEFAULT, WINDOW_WIDTH, WINDOW_HEIGHT, (HWND)NULL, (HMENU)NULL, hInstance, (LPVOID)NULL);
+	hwnd = CreateWindow(CLASS_NAME, GAME_TITLE, style, CW_USEDEFAULT, CW_USEDEFAULT, GAME_WIDTH, GAME_HEIGHT, (HWND)NULL, (HMENU)NULL, hInstance, (LPVOID)NULL);
 	// ウィンドウの作成でエラーが発生した場合
 	if (!hwnd)
 		return false;
+	if (!FULLSCREEN)	//ウィンドウ表示の場合
+	{
+		// クライアント領域がGAME_WIDTH * GAME_HEIGHTとなるようにウィンドウサイズを調整
+		RECT clientRect;
+		// ウィンドウのクライアント領域のサイズを取得
+		GetClientRect(hwnd, &clientRect);
+		MoveWindow(hwnd, 0, 0, GAME_WIDTH + (GAME_WIDTH - clientRect.right), GAME_HEIGHT + (GAME_HEIGHT - clientRect.bottom), TRUE);
+	}
 	// ウィンドウを表示
 	ShowWindow(hwnd, nCmdShow);
 	// ウィンドウプロシージャにWM_PAINTメッセージを送る
@@ -146,20 +144,20 @@ bool CreateMainWindow(HINSTANCE hInstance, int nCmdShow)
 	return true;
 }
 
-//=====================================================
-// 現在のアプリケーションの別のインスタンスがないかチェック
-// 戻り値:別のインスタンスが見つかった:true
-//        見つからなかった:false
-//=====================================================
-
-bool AnotherInstance() 
-{
-	HANDLE outMutex;
-	// 固有の文字列を使ってミューテックスの作成を試みる
-	outMutex = CreateMutex(NULL, true, "Use_a_different_string_here_for_each_program_48161_XYZZY");
-	if (GetLastError()==ERROR_ALREADY_EXISTS)
-	{
-		return true;
-	}
-	return false;
-}
+////=====================================================
+//// 現在のアプリケーションの別のインスタンスがないかチェック
+//// 戻り値:別のインスタンスが見つかった:true
+////        見つからなかった:false
+////=====================================================
+//
+//bool AnotherInstance() 
+//{
+//	HANDLE outMutex;
+//	// 固有の文字列を使ってミューテックスの作成を試みる
+//	outMutex = CreateMutex(NULL, true, "Use_a_different_string_here_for_each_program_48161_XYZZY");
+//	if (GetLastError()==ERROR_ALREADY_EXISTS)
+//	{
+//		return true;
+//	}
+//	return false;
+//}
